@@ -17,7 +17,6 @@ def main():
     parser.add_argument('-t', '--timeout', default=60)
 
     args = parser.parse_args(sys.argv[1:])
-    print(args)
 
     # Naive "rules" implementation
     if not args.update and not args.taskName:
