@@ -82,7 +82,7 @@ def main():
             print("ERROR: New task definition not running within {} seconds".format(timeout))
             sys.exit(1)
 
-        print("New task not running yet, backing off for {} seconds".format(backoffTime))
+        print("New task not running yet, backing off for {} seconds".format(BACKOFF_TIME))
 
     # Excplicitly end with exit code zero
     sys.exit(0)
