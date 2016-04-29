@@ -1,0 +1,85 @@
+#! /usr/bin/env python3
+import sys
+import argparse
+from copy import deepcopy
+import time
+import boto3
+
+BACKOFF_TIME=3
+
+def main():
+    parser = argparse.ArgumentParser(description='Deploy service with one or more tasks')
+    parser.add_argument('-c', '--cluster', default='default')
+    parser.add_argument('-n', '--service-name', dest='service')
+    parser.add_argument('-d', '--task-definition', nargs=1, dest='taskName')
+    parser.add_argument('-u', '--update', action='store_true')
+    parser.add_argument('-i', '--image', nargs=2, action='append')
+    parser.add_argument('-t', '--timeout', default=60)
+
+    args = parser.parse_args(sys.argv[1:])
+    print(args)
+
+    # Naive "rules" implementation
+    if not args.update and not args.taskName:
+        print("You need to specify a taskName if you're not issuing an update")
+        sys.exit(1)
+
+    ecs = boto3.client('ecs')
+
+    taskARN = False
+    if args.update:
+        result = ecs.describe_services(cluster=args.cluster, services=(args.service, ))
+        taskARN = result['services'][0]['taskDefinition']
+    if not taskARN:
+        print("Unable to locate ARN for task")
+        sys.exit(1)
+
+    task = ecs.describe_task_definition(taskDefinition=taskARN)
+
+    newTaskdefinition = dict(
+        family=task['taskDefinition']['family'],
+        volumes=deepcopy(task['taskDefinition']['volumes']),
+        containerDefinitions=deepcopy(task['taskDefinition']['containerDefinitions']),
+    )
+
+    if args.image:
+        for image in args.image:
+            container = [x for x in newTaskdefinition["containerDefinitions"] if x["name"] == image[0]]
+            if container:
+                container[0]["image"] = image[1]
+
+    result = ecs.register_task_definition(**newTaskdefinition)
+    newTaskdefinitionARN = result['taskDefinition']['taskDefinitionArn']
+    print("New task definition: {}".format(newTaskdefinitionARN))
+
+    if not args.service:
+        print("Successfully updated task definition")
+        sys.exit(0)
+
+    ecs.update_service(cluster=args.cluster, service=args.service, taskDefinition=newTaskdefinitionARN)
+
+    timeout = args.timeout
+    t = time.time()
+    while True:
+        time.sleep(BACKOFF_TIME)
+
+        result = ecs.list_tasks(cluster=args.cluster, serviceName=args.service, desiredStatus='RUNNING')
+        if result and 'taskArns' in result:
+            tasks = ecs.describe_tasks(cluster=args.cluster, tasks=result['taskArns'])
+            if tasks and 'tasks' in tasks:
+                has_updated = [x for x in tasks['tasks'] if x['taskDefinitionArn'] == newTaskdefinitionARN]
+                if len(has_updated) > 0:
+                    print("Service updated successfully, new task definition running.")
+                    break
+
+        if time.time() - t > timeout:
+            print("ERROR: New task definition not running within {} seconds".format(timeout))
+            sys.exit(1)
+
+        print("New task not running yet, backing off for {} seconds".format(backoffTime))
+
+    # Excplicitly end with exit code zero
+    sys.exit(0)
+
+if __name__ == "__main__":
+    main()
