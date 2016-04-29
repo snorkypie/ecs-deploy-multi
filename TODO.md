@@ -9,3 +9,4 @@
     - desiredCount
     - deploymentConfiguration.maximumPercent
     - deploymentConfiguration.minimumHealthyPercent
+- Support specifying what configuration project to use (~/.aws/config)
