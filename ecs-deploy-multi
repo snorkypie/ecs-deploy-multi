@@ -51,7 +51,7 @@ def main():
                 container[0]["image"] = image[1]
 
     if args.onlyIfModified and not has_update:
-        print("No container images have been updated, aborting")
+        print("No container images was updated, aborting")
         sys.exit(0)
 
     result = ecs.register_task_definition(**newTaskdefinition)
