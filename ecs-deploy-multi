@@ -15,7 +15,7 @@ def main():
     parser.add_argument('-u', '--update', action='store_true')
     parser.add_argument('-i', '--image', nargs=2, action='append')
     parser.add_argument('-t', '--timeout', default=60)
-    parser.add_argument('-O', '--only-if-modified', default=False, dest='onlyIfModified')
+    parser.add_argument('-O', '--only-if-modified', action='store_true', dest='onlyIfModified')
 
     args = parser.parse_args(sys.argv[1:])
 
