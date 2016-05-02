@@ -91,7 +91,7 @@ def main():
 
     has_update = False
     if images:
-        for image in args.image:
+        for image in images:
             container = [x for x in newTaskdefinition["containerDefinitions"] if x["name"] == image[0]]
             if container and container[0]["image"] != image[1]:
                 has_update = True
