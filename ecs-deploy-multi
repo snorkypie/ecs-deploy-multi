@@ -33,7 +33,7 @@ def main():
     elif args.copy and not update:
         print("Implicitly enabling update since you're using copy.")
         update = True
-    elif not args.taskName and not args.copy:
+    elif not update and not args.taskName and not args.copy:
         print("You need to specify a taskName or to copy using --copy-images")
         sys.exit(1)
 
