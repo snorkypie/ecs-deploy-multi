@@ -24,14 +24,15 @@ def main():
 
     args = parser.parse_args(sys.argv[1:])
 
+    update = args.update
+
     # Naive "rules" implementation
-    if args.update:
-        if args.taskName:
-            print("update and taskName does not work together")
-            sys.exit(1)
-        if args.copy:
-            print("update and copy-images does not work together")
-            sys.exit(1)
+    if update and args.taskName:
+        print("update and taskName does not work together")
+        sys.exit(1)
+    elif args.copy and not update:
+        print("Implicitly enabling update since you're using copy.")
+        update = True
     elif not args.taskName and not args.copy:
         print("You need to specify a taskName or to copy using --copy-images")
         sys.exit(1)
@@ -58,7 +59,7 @@ def main():
     ecs = boto3.client('ecs', region_name=region)
 
     taskARN = False
-    if args.update:
+    if update:
         result = ecs.describe_services(cluster=args.cluster, services=(args.service, ))
         taskARN = result['services'][0]['taskDefinition']
 
