@@ -63,6 +63,10 @@ def main():
         result = ecs.describe_services(cluster=args.cluster, services=(args.service, ))
         taskARN = result['services'][0]['taskDefinition']
 
+    if not taskARN:
+        print("Unable to locate ARN for task")
+        sys.exit(1)
+
     images = deepcopy(args.image)
     if args.copy:
         images = []
@@ -70,10 +74,12 @@ def main():
         task = ecs.describe_task_definition(taskDefinition=result['services'][0]['taskDefinition'])
         for container in task['taskDefinition']['containerDefinitions']:
             images.append(( container["name"], container["image"] ))
-
-    if not taskARN:
-        print("Unable to locate ARN for task")
-        sys.exit(1)
+        if len(images) > 0:
+            print("Found and copied these container images:")
+            print("\n".join([ "{}: {}".format(*image) for image in images ]))
+        else:
+            print("No container images found to copy, sorry.")
+            sys.exit(1)
 
     task = ecs.describe_task_definition(taskDefinition=taskARN)
 
