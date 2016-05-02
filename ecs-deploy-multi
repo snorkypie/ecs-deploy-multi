@@ -16,6 +16,7 @@ def main():
     parser.add_argument('-c', '--cluster', default='default')
     parser.add_argument('-n', '--service-name', dest='service')
     parser.add_argument('-d', '--task-definition', nargs=1, dest='taskName')
+    parser.add_argument('-k', '--copy-images', dest='copy')
     parser.add_argument('-u', '--update', action='store_true')
     parser.add_argument('-i', '--image', nargs=2, action='append')
     parser.add_argument('-t', '--timeout', default=60)
@@ -24,8 +25,15 @@ def main():
     args = parser.parse_args(sys.argv[1:])
 
     # Naive "rules" implementation
-    if not args.update and not args.taskName:
-        print("You need to specify a taskName if you're not issuing an update")
+    if args.update:
+        if args.taskName:
+            print("update and taskName does not work together")
+            sys.exit(1)
+        if args.copy:
+            print("update and copy-images does not work together")
+            sys.exit(1)
+    elif not args.taskName and not args.copy:
+        print("You need to specify a taskName or to copy using --copy-images")
         sys.exit(1)
 
     region = False
@@ -53,6 +61,15 @@ def main():
     if args.update:
         result = ecs.describe_services(cluster=args.cluster, services=(args.service, ))
         taskARN = result['services'][0]['taskDefinition']
+
+    images = deepcopy(args.image)
+    if args.copy:
+        images = []
+        result = ecs.describe_services(cluster=args.cluster, services=(args.copy, ))
+        task = ecs.describe_task_definition(taskDefinition=result['services'][0]['taskDefinition'])
+        for container in task['taskDefinition']['containerDefinitions']:
+            images.append(( container["name"], container["image"] ))
+
     if not taskARN:
         print("Unable to locate ARN for task")
         sys.exit(1)
@@ -66,7 +83,7 @@ def main():
     )
 
     has_update = False
-    if args.image:
+    if images:
         for image in args.image:
             container = [x for x in newTaskdefinition["containerDefinitions"] if x["name"] == image[0]]
             if container and container[0]["image"] != image[1]:
