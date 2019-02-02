@@ -87,6 +87,7 @@ def main():
         family=task['taskDefinition']['family'],
         volumes=deepcopy(task['taskDefinition']['volumes']),
         containerDefinitions=deepcopy(task['taskDefinition']['containerDefinitions']),
+        taskRoleArn=task['taskDefinition']['taskRoleArn'],
     )
 
     has_update = False
