@@ -87,8 +87,11 @@ def main():
         family=task['taskDefinition']['family'],
         volumes=deepcopy(task['taskDefinition']['volumes']),
         containerDefinitions=deepcopy(task['taskDefinition']['containerDefinitions']),
-        taskRoleArn=task['taskDefinition']['taskRoleArn'],
     )
+
+    # only copy task role when there is one
+    if 'taskRoleArn' in task['taskDefinition']:
+        newTaskdefinition['taskRoleArn'] = task['taskDefinition']['taskRoleArn']
 
     has_update = False
     if images:
