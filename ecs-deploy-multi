@@ -83,15 +83,12 @@ def main():
 
     task = ecs.describe_task_definition(taskDefinition=taskARN)
 
-    newTaskdefinition = dict(
-        family=task['taskDefinition']['family'],
-        volumes=deepcopy(task['taskDefinition']['volumes']),
-        containerDefinitions=deepcopy(task['taskDefinition']['containerDefinitions']),
-    )
+    newTaskdefinition = deepcopy(task['taskDefinition'])
 
-    # only copy task role when there is one
-    if 'taskRoleArn' in task['taskDefinition']:
-        newTaskdefinition['taskRoleArn'] = task['taskDefinition']['taskRoleArn']
+    # remove fields that are automatically generated
+    blacklist = [ 'taskDefinitionArn', 'revision', 'status', 'requiresAttributes', 'compatibilities' ]
+    for field in blacklist:
+        newTaskdefinition.pop(field, None)
 
     has_update = False
     if images:
