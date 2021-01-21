@@ -86,7 +86,7 @@ def main():
     newTaskdefinition = deepcopy(task['taskDefinition'])
 
     # remove fields that are automatically generated
-    blacklist = [ 'taskDefinitionArn', 'revision', 'status', 'requiresAttributes', 'compatibilities' ]
+    blacklist = [ 'taskDefinitionArn', 'revision', 'status', 'requiresAttributes', 'compatibilities', 'registeredAt', 'registeredBy' ]
     for field in blacklist:
         newTaskdefinition.pop(field, None)
 
